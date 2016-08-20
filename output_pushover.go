@@ -18,6 +18,14 @@ func init() {
 type MessageHandlerPushover struct{}
 
 func (h MessageHandlerPushover) Handle(m message) (stopHandling bool, err error) {
+	pushoverToken, err := config.GetString("outputs/pushover/token")
+	if err != nil {
+		return false, err
+	}
+	if pushoverToken == "" {
+		return false, errors.New("When using pushover output config value 'outputs/pushover/token' is required")
+	}
+
 	u := "https://api.pushover.net/1/messages.json"
 
 	if _, ok := m["message"]; !ok {
@@ -29,6 +37,7 @@ func (h MessageHandlerPushover) Handle(m message) (stopHandling bool, err error)
 	}
 
 	vals := url.Values{
+		"token":     []string{pushoverToken},
 		"timestamp": []string{strconv.FormatInt(m.Date().Unix(), 10)},
 	}
 

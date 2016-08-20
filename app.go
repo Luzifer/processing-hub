@@ -21,6 +21,7 @@ import (
 
 var (
 	cfg = struct {
+		ConfigBackend  string `flag:"config" default:"env" description:"Config backend to use"`
 		Listen         string `flag:"listen" default:":3000" default:"IP/Port to listen on"`
 		SQSQueueURL    string `flag:"sqs-queue-url" env:"SQS_QUEUE_URL" description:"URL of the SQS queue to use for messages"`
 		VersionAndExit bool   `flag:"version" default:"false" description:"Prints current version and exits"`
@@ -28,11 +29,18 @@ var (
 
 	inputHandlers   = map[string]inputHandler{}
 	messageHandlers = map[string]messageHandler{}
+	config          configStore
 
 	sqsClient *sqs.SQS
 
 	version = "dev"
 )
+
+type configStore interface {
+	Get(path string) (interface{}, error)
+	GetString(path string) (string, error)
+	GetInt(path string) (int64, error)
+}
 
 type inputHandler interface {
 	RegisterOnRouter(*mux.Router)
@@ -76,6 +84,8 @@ func init() {
 }
 
 func main() {
+	config = getConfigStore()
+
 	r := mux.NewRouter()
 
 	for path, handler := range inputHandlers {
