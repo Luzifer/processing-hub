@@ -192,7 +192,9 @@ func enqueueMessage(m *message) error {
 
 func executeExecutorScript() {
 	vm := otto.New()
-	vm.Set("$", scripthelpers.GetHelperMap())
+	functionMap := scripthelpers.GetHelperMap()
+	functionMap["GetConfig"] = config.Get
+	vm.Set("$", functionMap)
 
 	code := `
 	var bar = function(data) {
